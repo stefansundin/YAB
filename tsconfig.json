@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
     "esModuleInterop": true,
-    "moduleResolution": "node",
+    "moduleResolution": "NodeNext",
     "sourceMap": true,
     "jsx": "react",
     "downlevelIteration": true,
     "target": "ESNext",
-    "module": "ESNext",
+    "module": "NodeNext",
     "strictNullChecks": true,
     "outDir": "./dist"
   },
