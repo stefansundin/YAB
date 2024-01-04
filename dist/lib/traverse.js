@@ -14,7 +14,6 @@
  * and hope to be able to remove it some day.
  */
 import * as traverseMess from '@babel/traverse';
-// @ts-ignore
 export const traverse = traverseMess.default.default;
 export default traverse;
 //# sourceMappingURL=traverse.js.map

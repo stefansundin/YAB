@@ -1,7 +1,7 @@
-import path from 'path';
-import { readFile, } from 'fs/promises';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 import traverse from './traverse.js';
-import { hasOwnProperty, statOrUndefined, } from './util.js';
+import { hasOwnProperty, statOrUndefined } from './util.js';
 /**
  * Node's resolution algorithm for "import" statements is
  * described here: https://nodejs.org/api/esm.html#esm_resolution_algorithm
@@ -158,27 +158,27 @@ export const shouldAppendJsExtension = async (importingFilePathname, importSpeci
         return false;
     }
     const importSpecifierParts = importSpecifier.split('/');
-    if (importSpecifierParts[importSpecifierParts.length - 1]
-        .includes('.')) {
-        // there may be an extension specified,
-        // so we won't touch the import
-        return false;
-    }
     const importingFileDirectory = path.dirname(importingFilePathname);
     // TODO handle 'file:///' specifiers
-    if (importSpecifier.startsWith('./')
-        || importSpecifier.startsWith('../')
-        || path.isAbsolute(importSpecifier)) {
+    if (importSpecifier.startsWith('./') ||
+        importSpecifier.startsWith('../') ||
+        path.isAbsolute(importSpecifier)) {
         // relative imports - yes I know a path starting with '/'
         // is actually absolute, but they are treated the same by Node's
         // resolution algorithm
-        const resolvedSpecifierWithoutExt = path.isAbsolute(importSpecifier) ? importSpecifier
+        const resolvedSpecifierWithoutExt = path.isAbsolute(importSpecifier)
+            ? importSpecifier
             : path.join(importingFileDirectory, importSpecifier);
+        const specifierStatWithoutExt = await statOrUndefined(resolvedSpecifierWithoutExt);
+        if (specifierStatWithoutExt?.isDirectory()) {
+            return 'appendindexjs';
+        }
         const resolvedSpecifierPathname = `${resolvedSpecifierWithoutExt}.js`;
         const specifierStat = await statOrUndefined(resolvedSpecifierPathname);
-        if (specifierStat !== undefined) {
-            return specifierStat.isFile();
+        if (specifierStat?.isFile()) {
+            return 'appendjs';
         }
+        return false;
     }
     else if (/^\w/.test(importSpecifier)) {
         if (importSpecifier.includes('/')) {
@@ -196,9 +196,9 @@ export const shouldAppendJsExtension = async (importingFilePathname, importSpeci
                 return false;
             }
             const pjson = await loadPackageDotJSON(packageDirectory);
-            if (pjson !== undefined
-                && pjson !== 'invalid'
-                && hasOwnProperty(pjson, 'exports')) {
+            if (pjson !== undefined &&
+                pjson !== 'invalid' &&
+                hasOwnProperty(pjson, 'exports')) {
                 // if "exports" is defined it's a bad idea to rewrite
                 // the specifier because either:
                 // - there is a mapping in "exports" for our subPath
@@ -208,9 +208,10 @@ export const shouldAppendJsExtension = async (importingFilePathname, importSpeci
             }
             const resolvedSpecifierPathname = `${path.join(packageDirectory, subPath)}.js`;
             const specifierStat = await statOrUndefined(resolvedSpecifierPathname);
-            if (specifierStat !== undefined) {
-                return specifierStat.isFile();
+            if (specifierStat?.isFile()) {
+                return 'appendjs';
             }
+            return false;
         }
     }
     return false;
@@ -222,9 +223,9 @@ export const appendJsExtension = async (ast, metaData) => {
     traverse(ast, {
         enter: (nodePath) => {
             if (nodePath.node.trailingComments) {
-                const { node: { trailingComments } } = nodePath;
+                const { node: { trailingComments }, } = nodePath;
                 for (const comment of trailingComments) {
-                    if (comment.loc.start.line === comment.loc.end.line) {
+                    if (comment.loc && comment.loc.start.line === comment.loc.end.line) {
                         const [, maybeSourceMappingURL] = comment.value.split('sourceMappingURL=');
                         if (maybeSourceMappingURL) {
                             fileMetaData.sourceMappingURL = maybeSourceMappingURL;
@@ -232,8 +233,8 @@ export const appendJsExtension = async (ast, metaData) => {
                     }
                 }
             }
-            if (nodePath.isImportDeclaration()) {
-                const { node: { source } } = nodePath;
+            if (nodePath.isImportDeclaration() || nodePath.isExportAllDeclaration()) {
+                const { node: { source }, } = nodePath;
                 if (source.type === 'StringLiteral') {
                     if (source.loc && source.extra) {
                         const { value: specifier, extra: { raw }, } = source;
@@ -261,9 +262,20 @@ export const appendJsExtension = async (ast, metaData) => {
             }
         },
     });
-    await Promise.all(potentialReplacements.map(async ({ start, end, originalValue, quoteCharacter, specifier, }) => {
-        const shouldAppendExt = await shouldAppendJsExtension(metaData.pathname, specifier);
-        if (shouldAppendExt) {
+    await Promise.all(potentialReplacements.map(async ({ start, end, originalValue, quoteCharacter, specifier }) => {
+        const action = await shouldAppendJsExtension(metaData.pathname, specifier);
+        if (action === 'appendjs') {
+            transformations.push({
+                start,
+                end,
+                originalValue,
+                newValue: [quoteCharacter, specifier, '.js', quoteCharacter].join(''),
+                metaData: {
+                    type: 'js-import-extension',
+                },
+            });
+        }
+        else if (action === 'appendindexjs') {
             transformations.push({
                 start,
                 end,
@@ -271,7 +283,7 @@ export const appendJsExtension = async (ast, metaData) => {
                 newValue: [
                     quoteCharacter,
                     specifier,
-                    '.js',
+                    '/index.js',
                     quoteCharacter,
                 ].join(''),
                 metaData: {

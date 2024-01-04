@@ -1,14 +1,14 @@
-import { stat, } from 'fs/promises';
-import path from 'path';
-import { URL } from 'url';
-import minimist from 'minimist';
+import { stat } from 'node:fs/promises';
+import path from 'node:path';
+import { URL } from 'node:url';
 import chokidar from 'chokidar';
-import { hasOwnProperty, postpone, recursivelyReadDirectory, } from './lib/util.js';
+import minimist from 'minimist';
 import log, { strong } from './lib/log.js';
+import { hasOwnProperty, postpone, recursivelyReadDirectory, } from './lib/util.js';
+import { isProcessable, processFile } from './processFile.js';
 import usage from './usage.js';
-import { isProcessable, processFile, } from './processFile.js';
 const metaURLString = import.meta.url;
-const { pathname: thisScriptPathname, } = new URL(metaURLString);
+const { pathname: thisScriptPathname } = new URL(metaURLString);
 const printUsage = () => log(usage);
 const bail = (errMessage, exitCode = 1) => {
     log(`\n>> Error: ${errMessage}\n`);

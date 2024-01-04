@@ -1,11 +1,10 @@
-import { readdir, stat } from 'fs/promises';
-import path from 'path';
-// eslint-disable-next-line import/prefer-default-export
+import { readdir, stat } from 'node:fs/promises';
+import path from 'node:path';
 export const postpone = (nMilliseconds) => (fn) => {
     let lastCallTime = Date.now();
     let currentTimeout;
     const wrappedFn = (...args) => {
-        const tooEarly = () => (Date.now() - lastCallTime) < nMilliseconds;
+        const tooEarly = () => Date.now() - lastCallTime < nMilliseconds;
         const scheduleCall = () => {
             if (currentTimeout) {
                 clearTimeout(currentTimeout);
@@ -41,6 +40,10 @@ export const hasOwnProperty = (obj, prop) => Object.prototype.hasOwnProperty.cal
  * relative to dirPathName.
  */
 export const recursivelyReadDirectory = async (dirPathname) => {
+    const s = await stat(dirPathname);
+    if (s.isFile()) {
+        return [dirPathname];
+    }
     const dirEntries = await readdir(dirPathname);
     const deeperEntries = await Promise.all(dirEntries.map(async (entry) => {
         const entryPath = path.join(dirPathname, entry);

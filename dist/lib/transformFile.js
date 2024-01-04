@@ -3,10 +3,7 @@ import appendJsExtension from './appendJsExtension.js';
 export const transformFile = async (sourceCode, sourceFileMetaData) => {
     const ast = babelParser.parse(sourceCode, {
         sourceType: 'module',
-        plugins: [
-            'jsx',
-            'typescript',
-        ],
+        plugins: ['jsx', 'typescript'],
     });
     return appendJsExtension(ast, sourceFileMetaData);
 };

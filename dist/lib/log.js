@@ -1,5 +1,5 @@
 import colors from 'colors/safe.js';
-const { blue, bold, green, red, yellow, } = colors;
+const { blue, bold, green, red, yellow } = colors;
 const toString = (args) => {
     if (typeof args === 'string' || typeof args === 'number') {
         return `${args}`;
@@ -18,10 +18,7 @@ export const log = (...args) => {
 log.info = log;
 log.warning = (...args) => log(`[ ⚠ ${bold(yellow(toString(args)))} ⚠ ]`);
 log.debug = (...args) => log(blue(toString(args)));
-log.error = (...args) => log(red([
-    '[!!!]',
-    ...args,
-].join(' ')));
+log.error = (...args) => log(red(['[!!!]', ...args].join(' ')));
 export const strong = (str) => bold(green(`${str}`));
 export default log;
 //# sourceMappingURL=log.js.map
