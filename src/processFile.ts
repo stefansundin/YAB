@@ -6,14 +6,14 @@ import {
 import {
   applyTransformations,
   Transformation,
-} from './lib/transformation';
+} from './lib/transformation.js';
 
-import transformFile from './lib/transformFile';
+import transformFile from './lib/transformFile.js';
 
 import {
   log,
   strong,
-} from './lib/log';
+} from './lib/log.js';
 
 export const isProcessable = (p: string): boolean =>
   p.endsWith('.js');

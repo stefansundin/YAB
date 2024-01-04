@@ -12,15 +12,15 @@ import {
   hasOwnProperty,
   postpone,
   recursivelyReadDirectory,
-} from './lib/util';
+} from './lib/util.js';
 
-import log, { strong } from './lib/log';
-import usage from './usage';
+import log, { strong } from './lib/log.js';
+import usage from './usage.js';
 
 import {
   isProcessable,
   processFile,
-} from './processFile';
+} from './processFile.js';
 
 const metaURLString = import.meta.url;
 const {

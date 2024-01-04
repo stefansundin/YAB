@@ -1,7 +1,7 @@
 import babelParser from '@babel/parser';
 
-import appendJsExtension from './appendJsExtension';
-import { Transformation } from './transformation';
+import appendJsExtension from './appendJsExtension.js';
+import { Transformation } from './transformation.js';
 
 export type SourceInfo = {
   filePath: string

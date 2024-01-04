@@ -4,17 +4,17 @@ import {
 } from 'fs/promises';
 
 import BT from '@babel/types';
-import traverse from './traverse';
+import traverse from './traverse.js';
 
 import {
   Location,
   Transformation,
-} from './transformation';
-import { FileMetaData } from './transformFile';
+} from './transformation.js';
+import { FileMetaData } from './transformFile.js';
 import {
   hasOwnProperty,
   statOrUndefined,
-} from './util';
+} from './util.js';
 
 /**
  * Node's resolution algorithm for "import" statements is
