@@ -13,3 +13,6 @@ tmp
 src/draft.ts
 js/draft.js
 js/draft.js.map
+
+node_modules
+.DS_Store
