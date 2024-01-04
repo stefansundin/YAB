@@ -8,7 +8,7 @@
     "target": "ESNext",
     "module": "ESNext",
     "strictNullChecks": true,
-    "outDir": "./js-unstable"
+    "outDir": "./dist"
   },
   "include": ["src/**/*"],
   "exclude": ["src/draft.ts"]

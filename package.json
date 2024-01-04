@@ -15,17 +15,13 @@
   },
   "scripts": {
     "lint": "eslint src tests",
-    "clean": "echo 'cleaning old JS generated files...' && rm -Rf js-unstable",
-    "transpile": "yarn clean && echo 'transpiling YAB' && yarn tsc --project ./tsconfig.json",
-    "clean-and-transform-unstable": "yarn transpile && node dist/bin.js js-unstable --once",
+    "clean": "echo 'cleaning old JS generated files...' && rm -Rf dist",
+    "build": "yarn clean && echo 'transpiling YAB' && yarn tsc --project ./tsconfig.json",
     "transpile-watch": "yarn tsc --project ./tsconfig.json --watch",
-    "run-unstable": "nodemon js-unstable/bin.js",
-    "dev": "yarn clean-and-transform-unstable && echo \"Now using the development version of YAB to watch its own transpiled code.\" && concurrently -n transpile,transform,test \"yarn transpile-watch\" \"yarn run-unstable js-unstable\" \"yarn tdd\"",
     "test": "NODE_OPTIONS=--experimental-vm-modules yarn jest",
     "test-watch": "yarn tdd",
     "tdd": "NODE_OPTIONS=--experimental-vm-modules yarn jest --watch",
-    "run-stable": "node dist/bin.js",
-    "pre-release": "echo assuming \"js-unstable\" mature for this iteration and moving its contents to \"dist\" && rm -Rf dist && cp -R js-unstable dist"
+    "run-stable": "node dist/bin.js"
   },
   "devDependencies": {
     "@types/jest": "^26.0.23",

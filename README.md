@@ -120,10 +120,7 @@ and **actually run it** on *Node.js* without going through all the mess of bundl
 
 ## Developing
 
-The "dev" script in package.json is handy: it starts `tsc` and the test-runner (`jest`)
-in parallel and it first utilizes the stable version of *yab* in the `dist` folder
-to adjust the transpiled source of `src` then starts watching a git-ignored `js-unstable` dir,
-which is the `tsconfig.json`'s "outDir".
+Just run `yarn build`.
 
 ## Missing features that I have identified
 
