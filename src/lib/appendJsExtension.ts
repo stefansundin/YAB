@@ -1,20 +1,12 @@
-import path from 'path';
-import {
-  readFile,
-} from 'fs/promises';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 
 import BT from '@babel/types';
-import traverse from './traverse.js';
 
-import {
-  Location,
-  Transformation,
-} from './transformation.js';
+import { Location, Transformation } from './transformation.js';
 import { FileMetaData } from './transformFile.js';
-import {
-  hasOwnProperty,
-  statOrUndefined,
-} from './util.js';
+import traverse from './traverse.js';
+import { hasOwnProperty, statOrUndefined } from './util.js';
 
 /**
  * Node's resolution algorithm for "import" statements is
@@ -153,16 +145,9 @@ const findPackageDirectory = async (
 
 const loadPackageDotJSON = async (
   packageDirectory: string,
-): Promise<
-  Record<string, unknown>
-  | 'invalid'
-  | undefined
-> => {
+): Promise<Record<string, unknown> | 'invalid' | undefined> => {
   try {
-    const buffer = await readFile(path.join(
-      packageDirectory,
-      'package.json',
-    ));
+    const buffer = await readFile(path.join(packageDirectory, 'package.json'));
     const jsonSource = buffer.toString();
     try {
       return JSON.parse(jsonSource);
@@ -191,33 +176,27 @@ const loadPackageDotJSON = async (
 export const shouldAppendJsExtension = async (
   importingFilePathname: string,
   importSpecifier: string,
-): Promise<false|'appendjs'|'appendindexjs'> => {
+): Promise<false | 'appendjs' | 'appendindexjs'> => {
   if (!importingFilePathname.endsWith('.js')) {
     return false;
   }
 
   const importSpecifierParts = importSpecifier.split('/');
 
-  const importingFileDirectory = path.dirname(
-    importingFilePathname,
-  );
+  const importingFileDirectory = path.dirname(importingFilePathname);
 
   // TODO handle 'file:///' specifiers
   if (
-    importSpecifier.startsWith('./')
-      || importSpecifier.startsWith('../')
-      || path.isAbsolute(importSpecifier)
+    importSpecifier.startsWith('./') ||
+    importSpecifier.startsWith('../') ||
+    path.isAbsolute(importSpecifier)
   ) {
     // relative imports - yes I know a path starting with '/'
     // is actually absolute, but they are treated the same by Node's
     // resolution algorithm
-    const resolvedSpecifierWithoutExt = path.isAbsolute(
-      importSpecifier,
-    ) ? importSpecifier
-      : path.join(
-        importingFileDirectory,
-        importSpecifier,
-      );
+    const resolvedSpecifierWithoutExt = path.isAbsolute(importSpecifier)
+      ? importSpecifier
+      : path.join(importingFileDirectory, importSpecifier);
 
     const specifierStatWithoutExt = await statOrUndefined(
       resolvedSpecifierWithoutExt,
@@ -227,9 +206,7 @@ export const shouldAppendJsExtension = async (
     }
 
     const resolvedSpecifierPathname = `${resolvedSpecifierWithoutExt}.js`;
-    const specifierStat = await statOrUndefined(
-      resolvedSpecifierPathname,
-    );
+    const specifierStat = await statOrUndefined(resolvedSpecifierPathname);
     if (specifierStat?.isFile()) {
       return 'appendjs';
     }
@@ -257,13 +234,13 @@ export const shouldAppendJsExtension = async (
         return false;
       }
 
-      const pjson = await loadPackageDotJSON(
-        packageDirectory,
-      );
+      const pjson = await loadPackageDotJSON(packageDirectory);
 
-      if (pjson !== undefined
-            && pjson !== 'invalid'
-            && hasOwnProperty(pjson, 'exports')) {
+      if (
+        pjson !== undefined &&
+        pjson !== 'invalid' &&
+        hasOwnProperty(pjson, 'exports')
+      ) {
         // if "exports" is defined it's a bad idea to rewrite
         // the specifier because either:
         // - there is a mapping in "exports" for our subPath
@@ -277,9 +254,7 @@ export const shouldAppendJsExtension = async (
         subPath,
       )}.js`;
 
-      const specifierStat = await statOrUndefined(
-        resolvedSpecifierPathname,
-      );
+      const specifierStat = await statOrUndefined(resolvedSpecifierPathname);
       if (specifierStat?.isFile()) {
         return 'appendjs';
       }
@@ -291,12 +266,12 @@ export const shouldAppendJsExtension = async (
 };
 
 type PotentialReplacement = {
-  start: Location
-  end: Location
-  originalValue: string
-  quoteCharacter: string
-  specifier: string
-}
+  start: Location;
+  end: Location;
+  originalValue: string;
+  quoteCharacter: string;
+  specifier: string;
+};
 
 export const appendJsExtension = async (
   ast: BT.Node,
@@ -310,12 +285,13 @@ export const appendJsExtension = async (
   traverse(ast, {
     enter: (nodePath) => {
       if (nodePath.node.trailingComments) {
-        const { node: { trailingComments } } = nodePath;
+        const {
+          node: { trailingComments },
+        } = nodePath;
         for (const comment of trailingComments) {
           if (comment.loc && comment.loc.start.line === comment.loc.end.line) {
-            const [, maybeSourceMappingURL] = comment.value.split(
-              'sourceMappingURL=',
-            );
+            const [, maybeSourceMappingURL] =
+              comment.value.split('sourceMappingURL=');
             if (maybeSourceMappingURL) {
               fileMetaData.sourceMappingURL = maybeSourceMappingURL;
             }
@@ -324,7 +300,9 @@ export const appendJsExtension = async (
       }
 
       if (nodePath.isImportDeclaration() || nodePath.isExportAllDeclaration()) {
-        const { node: { source } } = nodePath;
+        const {
+          node: { source },
+        } = nodePath;
         if (source.type === 'StringLiteral') {
           if (source.loc && source.extra) {
             const {
@@ -364,51 +342,43 @@ export const appendJsExtension = async (
   });
 
   await Promise.all(
-    potentialReplacements.map(async ({
-      start,
-      end,
-      originalValue,
-      quoteCharacter,
-      specifier,
-    }) => {
-      const action = await shouldAppendJsExtension(
-        metaData.pathname,
-        specifier,
-      );
+    potentialReplacements.map(
+      async ({ start, end, originalValue, quoteCharacter, specifier }) => {
+        const action = await shouldAppendJsExtension(
+          metaData.pathname,
+          specifier,
+        );
 
-      if (action === 'appendjs') {
-        transformations.push({
-          start,
-          end,
-          originalValue,
-          newValue: [
-            quoteCharacter,
-            specifier,
-            '.js',
-            quoteCharacter,
-          ].join(''),
-          metaData: {
-            type: 'js-import-extension',
-          },
-        });
-      }
-      else if (action === 'appendindexjs') {
-        transformations.push({
-          start,
-          end,
-          originalValue,
-          newValue: [
-            quoteCharacter,
-            specifier,
-            '/index.js',
-            quoteCharacter,
-          ].join(''),
-          metaData: {
-            type: 'js-import-extension',
-          },
-        });
-      }
-    }),
+        if (action === 'appendjs') {
+          transformations.push({
+            start,
+            end,
+            originalValue,
+            newValue: [quoteCharacter, specifier, '.js', quoteCharacter].join(
+              '',
+            ),
+            metaData: {
+              type: 'js-import-extension',
+            },
+          });
+        } else if (action === 'appendindexjs') {
+          transformations.push({
+            start,
+            end,
+            originalValue,
+            newValue: [
+              quoteCharacter,
+              specifier,
+              '/index.js',
+              quoteCharacter,
+            ].join(''),
+            metaData: {
+              type: 'js-import-extension',
+            },
+          });
+        }
+      },
+    ),
   );
 
   return [transformations, fileMetaData];

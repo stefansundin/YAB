@@ -1,31 +1,21 @@
-import {
-  stat,
-} from 'fs/promises';
+import { stat } from 'node:fs/promises';
+import path from 'node:path';
+import { URL } from 'node:url';
 
-import path from 'path';
-import { URL } from 'url';
-
-import minimist from 'minimist';
 import chokidar from 'chokidar';
+import minimist from 'minimist';
 
+import log, { strong } from './lib/log.js';
 import {
   hasOwnProperty,
   postpone,
   recursivelyReadDirectory,
 } from './lib/util.js';
-
-import log, { strong } from './lib/log.js';
+import { isProcessable, processFile } from './processFile.js';
 import usage from './usage.js';
 
-import {
-  isProcessable,
-  processFile,
-} from './processFile.js';
-
 const metaURLString = import.meta.url;
-const {
-  pathname: thisScriptPathname,
-} = new URL(metaURLString);
+const { pathname: thisScriptPathname } = new URL(metaURLString);
 
 const printUsage = () => log(usage);
 
@@ -81,12 +71,9 @@ const startWatching = async (dirPath: string): Promise<void> => {
   let nFiles = 0;
   let nProcessable = 0;
 
-  const report = postpone(500)(
-    () => log(
-      `watching ${nDirs
-      } directories totalling ${nFiles
-      } files, of which ${nProcessable
-      } are of interest to us`,
+  const report = postpone(500)(() =>
+    log(
+      `watching ${nDirs} directories totalling ${nFiles} files, of which ${nProcessable} are of interest to us`,
     ),
   );
 

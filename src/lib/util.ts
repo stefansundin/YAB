@@ -1,29 +1,23 @@
-import { readdir, stat } from 'fs/promises';
-import path from 'path';
+import { readdir, stat } from 'node:fs/promises';
+import path from 'node:path';
 
-type voidReturningFunction = (
-  ...args: unknown[]
-) => void;
+type voidReturningFunction = (...args: unknown[]) => void;
 
-// eslint-disable-next-line import/prefer-default-export
-export const postpone = (nMilliseconds: number) =>
+export const postpone =
+  (nMilliseconds: number) =>
   (fn: voidReturningFunction): voidReturningFunction => {
     let lastCallTime = Date.now();
     let currentTimeout: ReturnType<typeof setTimeout> | undefined;
 
     const wrappedFn = (...args: unknown[]) => {
-      const tooEarly = () =>
-        (Date.now() - lastCallTime) < nMilliseconds;
+      const tooEarly = () => Date.now() - lastCallTime < nMilliseconds;
 
       const scheduleCall = () => {
         if (currentTimeout) {
           clearTimeout(currentTimeout);
         }
 
-        currentTimeout = setTimeout(
-          () => wrappedFn(...args),
-          nMilliseconds,
-        );
+        currentTimeout = setTimeout(() => wrappedFn(...args), nMilliseconds);
       };
 
       if (tooEarly()) {
@@ -39,7 +33,7 @@ export const postpone = (nMilliseconds: number) =>
 
 export const statOrUndefined = async (
   pathname: string,
-): Promise <ReturnType<typeof stat> | undefined> => {
+): Promise<ReturnType<typeof stat> | undefined> => {
   try {
     const s = await stat(pathname);
     return s;
@@ -55,7 +49,7 @@ export const hasOwnProperty = <property extends PropertyKey>(
   obj: unknown,
   prop: property,
 ): obj is Record<property, unknown> =>
-    Object.prototype.hasOwnProperty.call(obj, prop);
+  Object.prototype.hasOwnProperty.call(obj, prop);
 
 /**
  * Recursively reads a directory's content, returning
@@ -72,8 +66,8 @@ export const recursivelyReadDirectory = async (
 
   const dirEntries = await readdir(dirPathname);
 
-  const deeperEntries = await Promise.all(dirEntries.map(
-    async (entry: string): Promise<string[]> => {
+  const deeperEntries = await Promise.all(
+    dirEntries.map(async (entry: string): Promise<string[]> => {
       const entryPath = path.join(dirPathname, entry);
 
       const entryStat = await stat(entryPath);
@@ -84,8 +78,8 @@ export const recursivelyReadDirectory = async (
       }
 
       return [entryPath];
-    },
-  ));
+    }),
+  );
 
   const flattenedEntries = ([] as string[]).concat(...deeperEntries);
 

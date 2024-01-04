@@ -1,15 +1,15 @@
 export type Location = {
-  line: number
-  column: number
-}
+  line: number;
+  column: number;
+};
 
 export type Transformation = {
-  start: Location
-  end: Location
-  originalValue: string
-  newValue: string
-  metaData?: Record<string, unknown>
-}
+  start: Location;
+  end: Location;
+  originalValue: string;
+  newValue: string;
+  metaData?: Record<string, unknown>;
+};
 
 type SortOrder = 'asc' | 'desc' | 'lol';
 
@@ -103,8 +103,7 @@ const applySingleTransformation = (
 ): string[] => {
   const { start, end } = transformation;
 
-  const isSourceMultiLine = start.line
-    < end.line;
+  const isSourceMultiLine = start.line < end.line;
 
   if (sourceLines.length < start.line) {
     throw new Error(
@@ -114,40 +113,29 @@ const applySingleTransformation = (
 
   // lines before our target that are sure
   // to remain unchanged
-  const linesBefore = sourceLines.slice(
-    0,
-    start.line - 1,
-  );
+  const linesBefore = sourceLines.slice(0, start.line - 1);
 
   // lines that we will change, totally or partially
-  const linesToModify = sourceLines.slice(
-    start.line - 1,
-    end.line,
-  );
+  const linesToModify = sourceLines.slice(start.line - 1, end.line);
 
   // lines after our target that are sure
   // to remain unchanged
-  const linesAfter = sourceLines.slice(
-    end.line,
-  );
+  const linesAfter = sourceLines.slice(end.line);
 
   // the part in the first modified line that we won't transform
-  const leftPartOfFirstModifiedLine = linesToModify[0]
-    .slice(0, start.column);
+  const leftPartOfFirstModifiedLine = linesToModify[0].slice(0, start.column);
 
   // the part in the first modified line that we will transform
-  const rightPartOfFirstModifiedLine = linesToModify[0]
-    .slice(
-      start.column,
-      isSourceMultiLine ? undefined : end.column,
-    );
+  const rightPartOfFirstModifiedLine = linesToModify[0].slice(
+    start.column,
+    isSourceMultiLine ? undefined : end.column,
+  );
 
   // the part in the last modified line that we will transform
   // it's empty in the single line case because we have it captured
   // in the rightPartOfFirstModifiedLine already
   const leftPartOfLastModifiedLine = isSourceMultiLine
-    ? linesToModify[linesToModify.length - 1]
-      .slice(0, end.column)
+    ? linesToModify[linesToModify.length - 1].slice(0, end.column)
     : '';
 
   // the part in the last modified line that we won't transform
@@ -172,11 +160,7 @@ const applySingleTransformation = (
 
   if (source !== transformation.originalValue) {
     throw new Error(
-      `did not find expected source string - got "${
-        source
-      }" instead of ${
-        transformation.originalValue
-      }`,
+      `did not find expected source string - got "${source}" instead of ${transformation.originalValue}`,
     );
   }
 
@@ -191,13 +175,11 @@ const applySingleTransformation = (
     // the part of the last affected line
     // that we did not alter
     rightPartOfLastModifiedLined,
-  ].join('').split('\n');
+  ]
+    .join('')
+    .split('\n');
 
-  return [
-    ...linesBefore,
-    ...newModifiedLines,
-    ...linesAfter,
-  ];
+  return [...linesBefore, ...newModifiedLines, ...linesAfter];
 };
 
 export const applyTransformations = (
@@ -218,10 +200,9 @@ export const applyTransformations = (
     'desc',
   );
 
-  return descTransformations.reduce(
-    applySingleTransformation,
-    sourceCode.split('\n'),
-  ).join('\n');
+  return descTransformations
+    .reduce(applySingleTransformation, sourceCode.split('\n'))
+    .join('\n');
 };
 
 export default applyTransformations;
