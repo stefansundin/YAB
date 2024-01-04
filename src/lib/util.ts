@@ -65,6 +65,11 @@ export const hasOwnProperty = <property extends PropertyKey>(
 export const recursivelyReadDirectory = async (
   dirPathname: string,
 ): Promise<string[]> => {
+  const s = await stat(dirPathname);
+  if (s.isFile()) {
+    return [dirPathname];
+  }
+
   const dirEntries = await readdir(dirPathname);
 
   const deeperEntries = await Promise.all(dirEntries.map(
