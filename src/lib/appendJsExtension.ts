@@ -191,7 +191,7 @@ const loadPackageDotJSON = async (
 export const shouldAppendJsExtension = async (
   importingFilePathname: string,
   importSpecifier: string,
-): Promise<boolean> => {
+): Promise<false|'appendjs'|'appendindexjs'> => {
   if (!importingFilePathname.endsWith('.js')) {
     return false;
   }
@@ -219,13 +219,21 @@ export const shouldAppendJsExtension = async (
         importSpecifier,
       );
 
+    const specifierStatWithoutExt = await statOrUndefined(
+      resolvedSpecifierWithoutExt,
+    );
+    if (specifierStatWithoutExt?.isDirectory()) {
+      return 'appendindexjs';
+    }
+
     const resolvedSpecifierPathname = `${resolvedSpecifierWithoutExt}.js`;
     const specifierStat = await statOrUndefined(
       resolvedSpecifierPathname,
     );
-    if (specifierStat !== undefined) {
-      return specifierStat.isFile();
+    if (specifierStat?.isFile()) {
+      return 'appendjs';
     }
+    return false;
   } else if (/^\w/.test(importSpecifier)) {
     if (importSpecifier.includes('/')) {
       // we are importing a sub-path, so this
@@ -272,9 +280,10 @@ export const shouldAppendJsExtension = async (
       const specifierStat = await statOrUndefined(
         resolvedSpecifierPathname,
       );
-      if (specifierStat !== undefined) {
-        return specifierStat.isFile();
+      if (specifierStat?.isFile()) {
+        return 'appendjs';
       }
+      return false;
     }
   }
 
@@ -292,7 +301,6 @@ type PotentialReplacement = {
 export const appendJsExtension = async (
   ast: BT.Node,
   metaData: FileMetaData,
-
 ): Promise<[Transformation[], FileMetaData]> => {
   const transformations: Transformation[] = [];
   const fileMetaData: FileMetaData = { ...metaData };
@@ -315,7 +323,7 @@ export const appendJsExtension = async (
         }
       }
 
-      if (nodePath.isImportDeclaration()) {
+      if (nodePath.isImportDeclaration() || nodePath.isExportAllDeclaration()) {
         const { node: { source } } = nodePath;
         if (source.type === 'StringLiteral') {
           if (source.loc && source.extra) {
@@ -363,12 +371,12 @@ export const appendJsExtension = async (
       quoteCharacter,
       specifier,
     }) => {
-      const shouldAppendExt = await shouldAppendJsExtension(
+      const action = await shouldAppendJsExtension(
         metaData.pathname,
         specifier,
       );
 
-      if (shouldAppendExt) {
+      if (action === 'appendjs') {
         transformations.push({
           start,
           end,
@@ -377,6 +385,22 @@ export const appendJsExtension = async (
             quoteCharacter,
             specifier,
             '.js',
+            quoteCharacter,
+          ].join(''),
+          metaData: {
+            type: 'js-import-extension',
+          },
+        });
+      }
+      else if (action === 'appendindexjs') {
+        transformations.push({
+          start,
+          end,
+          originalValue,
+          newValue: [
+            quoteCharacter,
+            specifier,
+            '/index.js',
             quoteCharacter,
           ].join(''),
           metaData: {
