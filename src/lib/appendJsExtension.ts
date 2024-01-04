@@ -198,15 +198,6 @@ export const shouldAppendJsExtension = async (
 
   const importSpecifierParts = importSpecifier.split('/');
 
-  if (
-    importSpecifierParts[importSpecifierParts.length - 1]
-      .includes('.')
-  ) {
-    // there may be an extension specified,
-    // so we won't touch the import
-    return false;
-  }
-
   const importingFileDirectory = path.dirname(
     importingFilePathname,
   );
