@@ -11,7 +11,7 @@
       "es2021": true
   },
   "extends": [
-      "airbnb-base",
+      "eslint:recommended",
       "plugin:@typescript-eslint/recommended"
   ],
   "parser": "@typescript-eslint/parser",
@@ -23,13 +23,6 @@
       "@typescript-eslint"
   ],
   "rules": {
-    "import/extensions": [
-      1, {
-        "ts": "never",
-        "tsx": "never",
-        "js": "always"
-      }
-    ],
     "no-restricted-syntax": 0,
     "implicit-arrow-linebreak": 0,
     "@typescript-eslint/ban-ts-comment": 0,
