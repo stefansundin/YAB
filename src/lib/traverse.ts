@@ -14,9 +14,8 @@
  * and hope to be able to remove it some day.
  */
 
-import wrongTraverse, * as traverseMess from '@babel/traverse';
+import * as traverseMess from '@babel/traverse';
 
-// @ts-ignore
-export const traverse: typeof wrongTraverse = traverseMess.default.default;
+export const traverse = traverseMess.default.default;
 
 export default traverse;
