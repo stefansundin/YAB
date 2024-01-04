@@ -93,6 +93,10 @@ as I'm not just slashing in the code with approximative `RegExp`s.
 
 ## Usage:
 
+```shell
+yarn add -D add-js-extension@https://github.com/stefansundin/YAB.git
+```
+
 Just invoke the main script, whichever way you may have obtained it,
 and pass it a path to a directory containing `.js` files.
 
