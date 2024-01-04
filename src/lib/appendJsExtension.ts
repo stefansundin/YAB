@@ -304,7 +304,7 @@ export const appendJsExtension = async (
       if (nodePath.node.trailingComments) {
         const { node: { trailingComments } } = nodePath;
         for (const comment of trailingComments) {
-          if (comment.loc.start.line === comment.loc.end.line) {
+          if (comment.loc && comment.loc.start.line === comment.loc.end.line) {
             const [, maybeSourceMappingURL] = comment.value.split(
               'sourceMappingURL=',
             );
