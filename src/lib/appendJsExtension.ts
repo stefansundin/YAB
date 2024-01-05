@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import BT from '@babel/types';
 
+import { isProcessable } from '../processFile.js';
 import { Location, Transformation } from './transformation.js';
 import { FileMetaData } from './transformFile.js';
 import traverse from './traverse.js';
@@ -176,8 +177,8 @@ const loadPackageDotJSON = async (
 export const shouldAppendJsExtension = async (
   importingFilePathname: string,
   importSpecifier: string,
-): Promise<false | 'appendjs' | 'appendindexjs'> => {
-  if (!importingFilePathname.endsWith('.js')) {
+): Promise<false | string> => {
+  if (!isProcessable(importingFilePathname)) {
     return false;
   }
 
@@ -202,14 +203,21 @@ export const shouldAppendJsExtension = async (
       resolvedSpecifierWithoutExt,
     );
     if (specifierStatWithoutExt?.isDirectory()) {
-      return 'appendindexjs';
+      return importSpecifier + '/index.js';
     }
 
     const resolvedSpecifierPathname = `${resolvedSpecifierWithoutExt}.js`;
     const specifierStat = await statOrUndefined(resolvedSpecifierPathname);
     if (specifierStat?.isFile()) {
-      return 'appendjs';
+      return importSpecifier + '.js';
     }
+
+    const resolvedSpecifierPathnameTs = `${resolvedSpecifierWithoutExt}.ts`;
+    const specifierStatTs = await statOrUndefined(resolvedSpecifierPathnameTs);
+    if (specifierStatTs?.isFile()) {
+      return importSpecifier + '.js';
+    }
+
     return false;
   } else if (/^\w/.test(importSpecifier)) {
     if (importSpecifier.includes('/')) {
@@ -256,7 +264,7 @@ export const shouldAppendJsExtension = async (
 
       const specifierStat = await statOrUndefined(resolvedSpecifierPathname);
       if (specifierStat?.isFile()) {
-        return 'appendjs';
+        return importSpecifier + '.js';
       }
       return false;
     }
@@ -344,34 +352,17 @@ export const appendJsExtension = async (
   await Promise.all(
     potentialReplacements.map(
       async ({ start, end, originalValue, quoteCharacter, specifier }) => {
-        const action = await shouldAppendJsExtension(
+        const newPath = await shouldAppendJsExtension(
           metaData.pathname,
           specifier,
         );
 
-        if (action === 'appendjs') {
+        if (newPath) {
           transformations.push({
             start,
             end,
             originalValue,
-            newValue: [quoteCharacter, specifier, '.js', quoteCharacter].join(
-              '',
-            ),
-            metaData: {
-              type: 'js-import-extension',
-            },
-          });
-        } else if (action === 'appendindexjs') {
-          transformations.push({
-            start,
-            end,
-            originalValue,
-            newValue: [
-              quoteCharacter,
-              specifier,
-              '/index.js',
-              quoteCharacter,
-            ].join(''),
+            newValue: [quoteCharacter, newPath, quoteCharacter].join(''),
             metaData: {
               type: 'js-import-extension',
             },

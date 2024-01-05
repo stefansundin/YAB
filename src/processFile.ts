@@ -4,7 +4,8 @@ import { log, strong } from './lib/log.js';
 import { applyTransformations, Transformation } from './lib/transformation.js';
 import transformFile from './lib/transformFile.js';
 
-export const isProcessable = (p: string): boolean => p.endsWith('.js');
+export const isProcessable = (p: string): boolean =>
+  p.endsWith('.js') || p.endsWith('.ts');
 
 // TODO update the source-maps
 export const processFile = async (pathname: string): Promise<number> => {

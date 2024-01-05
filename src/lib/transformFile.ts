@@ -18,7 +18,7 @@ export const transformFile = async (
 ): Promise<[Transformation[], FileMetaData]> => {
   const ast = babelParser.parse(sourceCode, {
     sourceType: 'module',
-    plugins: ['jsx', 'typescript'],
+    plugins: ['jsx', 'typescript', 'decorators-legacy'],
   });
 
   return appendJsExtension(ast, sourceFileMetaData);
