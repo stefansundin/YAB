@@ -1,4 +1,5 @@
 import { readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
 
 import { log, strong } from './lib/log.js';
 import { applyTransformations, Transformation } from './lib/transformation.js';
@@ -14,6 +15,7 @@ export const processFile = async (pathname: string): Promise<number> => {
 
   const [transformations] = await transformFile(sourceCode, {
     pathname,
+    absolutePathname: path.resolve(pathname),
   });
 
   const nt = transformations.length;

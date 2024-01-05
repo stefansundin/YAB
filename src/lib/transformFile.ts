@@ -9,6 +9,7 @@ export type SourceInfo = {
 
 export type FileMetaData = {
   pathname: string;
+  absolutePathname: string;
   sourceMappingURL?: string;
 };
 

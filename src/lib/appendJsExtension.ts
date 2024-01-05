@@ -177,6 +177,7 @@ const loadPackageDotJSON = async (
 export const shouldAppendJsExtension = async (
   importingFilePathname: string,
   importSpecifier: string,
+  fileMetaData: FileMetaData,
 ): Promise<false | string> => {
   if (!isProcessable(importingFilePathname)) {
     return false;
@@ -186,7 +187,19 @@ export const shouldAppendJsExtension = async (
 
   const importingFileDirectory = path.dirname(importingFilePathname);
 
-  // TODO handle 'file:///' specifiers
+  // Handle src/ imports
+  if (importSpecifier.startsWith('src/')) {
+    const absolutePathnameTo =
+      fileMetaData.absolutePathname.substring(
+        0,
+        fileMetaData.absolutePathname.length - fileMetaData.pathname.length,
+      ) + importSpecifier;
+    importSpecifier = path.relative(
+      path.dirname(fileMetaData.absolutePathname),
+      absolutePathnameTo,
+    );
+  }
+
   if (
     importSpecifier.startsWith('./') ||
     importSpecifier.startsWith('../') ||
@@ -355,6 +368,7 @@ export const appendJsExtension = async (
         const newPath = await shouldAppendJsExtension(
           metaData.pathname,
           specifier,
+          fileMetaData,
         );
 
         if (newPath) {
