@@ -16,7 +16,7 @@
   "scripts": {
     "lint": "eslint src tests",
     "clean": "echo 'cleaning old JS generated files...' && rm -Rf dist",
-    "build": "yarn clean && echo 'transpiling YAB' && yarn tsc --project ./tsconfig.json",
+    "build": "yarn clean && echo 'transpiling YAB' && yarn tsc --project ./tsconfig.json && chmod +x ./dist/bin.js",
     "transpile-watch": "yarn tsc --project ./tsconfig.json --watch",
     "test": "NODE_OPTIONS=--experimental-vm-modules yarn jest",
     "test-watch": "yarn tdd",
