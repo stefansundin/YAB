@@ -332,11 +332,15 @@ export const appendJsExtension = async (
         }
       }
 
-      if (nodePath.isImportDeclaration() || nodePath.isExportAllDeclaration()) {
+      if (
+        nodePath.isImportDeclaration() ||
+        nodePath.isExportNamedDeclaration() ||
+        nodePath.isExportAllDeclaration()
+      ) {
         const {
           node: { source },
         } = nodePath;
-        if (source.type === 'StringLiteral') {
+        if (source?.type === 'StringLiteral') {
           if (source.loc && source.extra) {
             const {
               value: specifier,
