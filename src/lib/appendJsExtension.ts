@@ -189,10 +189,14 @@ export const shouldAppendJsExtension = async (
 
   // Handle src/ imports
   if (importSpecifier.startsWith('src/')) {
+    let pathname = fileMetaData.pathname;
+    if (!pathname.startsWith('src/') && pathname.includes('src/')) {
+      pathname = pathname.substring(pathname.indexOf('src/'));
+    }
     const absolutePathnameTo =
       fileMetaData.absolutePathname.substring(
         0,
-        fileMetaData.absolutePathname.length - fileMetaData.pathname.length,
+        fileMetaData.absolutePathname.length - pathname.length,
       ) + importSpecifier;
     importSpecifier = path.relative(
       path.dirname(fileMetaData.absolutePathname),
