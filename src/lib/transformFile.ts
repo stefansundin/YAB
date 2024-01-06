@@ -19,7 +19,12 @@ export const transformFile = async (
 ): Promise<[Transformation[], FileMetaData]> => {
   const ast = babelParser.parse(sourceCode, {
     sourceType: 'module',
-    plugins: ['jsx', 'typescript', 'decorators-legacy'],
+    plugins: [
+      'jsx',
+      'typescript',
+      'decorators-legacy',
+      ['importAttributes', { deprecatedAssertSyntax: true }],
+    ],
   });
 
   return appendJsExtension(ast, sourceFileMetaData);
