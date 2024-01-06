@@ -6,7 +6,7 @@ import { applyTransformations, Transformation } from './lib/transformation.js';
 import transformFile from './lib/transformFile.js';
 
 export const isProcessable = (p: string): boolean =>
-  p.endsWith('.js') || p.endsWith('.ts');
+  p.endsWith('.js') || p.endsWith('.ts') || p.endsWith('.tsx');
 
 // TODO update the source-maps
 export const processFile = async (pathname: string): Promise<number> => {

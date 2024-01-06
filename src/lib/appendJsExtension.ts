@@ -235,6 +235,14 @@ export const shouldAppendJsExtension = async (
       return importSpecifier + '.js';
     }
 
+    const resolvedSpecifierPathnameTsx = `${resolvedSpecifierWithoutExt}.tsx`;
+    const specifierStatTsx = await statOrUndefined(
+      resolvedSpecifierPathnameTsx,
+    );
+    if (specifierStatTsx?.isFile()) {
+      return importSpecifier + '.js';
+    }
+
     return false;
   } else if (/^\w/.test(importSpecifier)) {
     if (importSpecifier.includes('/')) {
