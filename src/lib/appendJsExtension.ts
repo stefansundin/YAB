@@ -202,7 +202,10 @@ export const shouldAppendJsExtension = async (
       path.dirname(fileMetaData.absolutePathname),
       absolutePathnameTo,
     );
-    if (!importSpecifier.startsWith('.')) {
+    if (
+      !importSpecifier.startsWith('./') &&
+      !importSpecifier.startsWith('../')
+    ) {
       // the imported file was in the same directory, add ./ as a prefix
       importSpecifier = './' + importSpecifier;
     }
