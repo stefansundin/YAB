@@ -1,14 +1,16 @@
 import { readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
 import { log, strong } from './lib/log.js';
 import { applyTransformations } from './lib/transformation.js';
 import transformFile from './lib/transformFile.js';
-export const isProcessable = (p) => p.endsWith('.js');
+export const isProcessable = (p) => p.endsWith('.js') || p.endsWith('.ts') || p.endsWith('.tsx');
 // TODO update the source-maps
 export const processFile = async (pathname) => {
     const buffer = await readFile(pathname);
     const sourceCode = buffer.toString();
     const [transformations] = await transformFile(sourceCode, {
         pathname,
+        absolutePathname: path.resolve(pathname),
     });
     const nt = transformations.length;
     if (nt > 0) {

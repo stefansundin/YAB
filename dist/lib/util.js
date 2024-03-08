@@ -46,6 +46,9 @@ export const recursivelyReadDirectory = async (dirPathname) => {
     }
     const dirEntries = await readdir(dirPathname);
     const deeperEntries = await Promise.all(dirEntries.map(async (entry) => {
+        if (entry === 'node_modules') {
+            return [];
+        }
         const entryPath = path.join(dirPathname, entry);
         const entryStat = await stat(entryPath);
         if (entryStat.isDirectory()) {

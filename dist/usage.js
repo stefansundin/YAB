@@ -47,6 +47,10 @@ TypeScript's 'tsconfig.json' file.
 
 Alternatively, pass the "--once" option to have the script return
 as soon as it has done its job.
+
+You can also pass "--sort" to sort imports after the transpilation
+has been performed. This uses the "format-imports" npm package.
+This only works when used in conjunction with "--once".
 `.trim();
 export default usage;
 //# sourceMappingURL=usage.js.map

@@ -1,8 +1,9 @@
 #!/usr/bin/env node
-import { stat } from 'node:fs/promises';
+import { readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { URL } from 'node:url';
 import chokidar from 'chokidar';
+import { formatSourceFromFile } from 'format-imports';
 import minimist from 'minimist';
 import log, { strong } from './lib/log.js';
 import { hasOwnProperty, postpone, recursivelyReadDirectory, } from './lib/util.js';
@@ -31,6 +32,14 @@ const tryAndProcessFile = async (pathname) => {
         else {
             throw e;
         }
+    }
+};
+const sortImports = async (pathname) => {
+    const text = (await readFile(pathname)).toString();
+    const newText = await formatSourceFromFile(text, pathname, {});
+    if (newText) {
+        // newText is undefined when everything is sorted already
+        await writeFile(pathname, newText);
     }
 };
 const startWatching = async (dirPath) => {
@@ -93,6 +102,11 @@ const processOnce = async (pathname) => {
         log.info(`  ${strong(file)}`);
     });
     await Promise.all(processableFiles.map(tryAndProcessFile));
+    if (options.sort) {
+        log.info('Sorting imports...');
+        await Promise.all(processableFiles.map(sortImports));
+        log.info();
+    }
     log.info('All done here. Have a nice day!');
 };
 if (hasOwnProperty(options, 'once')) {

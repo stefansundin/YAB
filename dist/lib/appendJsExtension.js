@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { isProcessable } from '../processFile.js';
 import traverse from './traverse.js';
 import { hasOwnProperty, statOrUndefined } from './util.js';
 /**
@@ -153,13 +154,26 @@ const loadPackageDotJSON = async (packageDirectory) => {
  * @param importSpecifier       is what that "import" statement
  *                              is trying to import
  */
-export const shouldAppendJsExtension = async (importingFilePathname, importSpecifier) => {
-    if (!importingFilePathname.endsWith('.js')) {
+export const shouldAppendJsExtension = async (importingFilePathname, importSpecifier, fileMetaData) => {
+    if (!isProcessable(importingFilePathname)) {
         return false;
     }
     const importSpecifierParts = importSpecifier.split('/');
     const importingFileDirectory = path.dirname(importingFilePathname);
-    // TODO handle 'file:///' specifiers
+    // Handle src/ imports
+    if (importSpecifier.startsWith('src/')) {
+        let pathname = fileMetaData.pathname;
+        if (!pathname.startsWith('src/') && pathname.includes('src/')) {
+            pathname = pathname.substring(pathname.indexOf('src/'));
+        }
+        const absolutePathnameTo = fileMetaData.absolutePathname.substring(0, fileMetaData.absolutePathname.length - pathname.length) + importSpecifier;
+        importSpecifier = path.relative(path.dirname(fileMetaData.absolutePathname), absolutePathnameTo);
+        if (!importSpecifier.startsWith('./') &&
+            !importSpecifier.startsWith('../')) {
+            // the imported file was in the same directory, add ./ as a prefix
+            importSpecifier = './' + importSpecifier;
+        }
+    }
     if (importSpecifier.startsWith('./') ||
         importSpecifier.startsWith('../') ||
         path.isAbsolute(importSpecifier)) {
@@ -169,14 +183,24 @@ export const shouldAppendJsExtension = async (importingFilePathname, importSpeci
         const resolvedSpecifierWithoutExt = path.isAbsolute(importSpecifier)
             ? importSpecifier
             : path.join(importingFileDirectory, importSpecifier);
-        const specifierStatWithoutExt = await statOrUndefined(resolvedSpecifierWithoutExt);
-        if (specifierStatWithoutExt?.isDirectory()) {
-            return 'appendindexjs';
-        }
         const resolvedSpecifierPathname = `${resolvedSpecifierWithoutExt}.js`;
         const specifierStat = await statOrUndefined(resolvedSpecifierPathname);
         if (specifierStat?.isFile()) {
-            return 'appendjs';
+            return importSpecifier + '.js';
+        }
+        const resolvedSpecifierPathnameTs = `${resolvedSpecifierWithoutExt}.ts`;
+        const specifierStatTs = await statOrUndefined(resolvedSpecifierPathnameTs);
+        if (specifierStatTs?.isFile()) {
+            return importSpecifier + '.js';
+        }
+        const resolvedSpecifierPathnameTsx = `${resolvedSpecifierWithoutExt}.tsx`;
+        const specifierStatTsx = await statOrUndefined(resolvedSpecifierPathnameTsx);
+        if (specifierStatTsx?.isFile()) {
+            return importSpecifier + '.js';
+        }
+        const specifierStatWithoutExt = await statOrUndefined(resolvedSpecifierWithoutExt);
+        if (specifierStatWithoutExt?.isDirectory()) {
+            return importSpecifier + '/index.js';
         }
         return false;
     }
@@ -209,7 +233,7 @@ export const shouldAppendJsExtension = async (importingFilePathname, importSpeci
             const resolvedSpecifierPathname = `${path.join(packageDirectory, subPath)}.js`;
             const specifierStat = await statOrUndefined(resolvedSpecifierPathname);
             if (specifierStat?.isFile()) {
-                return 'appendjs';
+                return importSpecifier + '.js';
             }
             return false;
         }
@@ -233,9 +257,11 @@ export const appendJsExtension = async (ast, metaData) => {
                     }
                 }
             }
-            if (nodePath.isImportDeclaration() || nodePath.isExportAllDeclaration()) {
+            if (nodePath.isImportDeclaration() ||
+                nodePath.isExportNamedDeclaration() ||
+                nodePath.isExportAllDeclaration()) {
                 const { node: { source }, } = nodePath;
-                if (source.type === 'StringLiteral') {
+                if (source?.type === 'StringLiteral') {
                     if (source.loc && source.extra) {
                         const { value: specifier, extra: { raw }, } = source;
                         if (!raw) {
@@ -263,29 +289,13 @@ export const appendJsExtension = async (ast, metaData) => {
         },
     });
     await Promise.all(potentialReplacements.map(async ({ start, end, originalValue, quoteCharacter, specifier }) => {
-        const action = await shouldAppendJsExtension(metaData.pathname, specifier);
-        if (action === 'appendjs') {
+        const newPath = await shouldAppendJsExtension(metaData.pathname, specifier, fileMetaData);
+        if (newPath) {
             transformations.push({
                 start,
                 end,
                 originalValue,
-                newValue: [quoteCharacter, specifier, '.js', quoteCharacter].join(''),
-                metaData: {
-                    type: 'js-import-extension',
-                },
-            });
-        }
-        else if (action === 'appendindexjs') {
-            transformations.push({
-                start,
-                end,
-                originalValue,
-                newValue: [
-                    quoteCharacter,
-                    specifier,
-                    '/index.js',
-                    quoteCharacter,
-                ].join(''),
+                newValue: [quoteCharacter, newPath, quoteCharacter].join(''),
                 metaData: {
                     type: 'js-import-extension',
                 },
