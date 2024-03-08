@@ -223,13 +223,6 @@ export const shouldAppendJsExtension = async (
       ? importSpecifier
       : path.join(importingFileDirectory, importSpecifier);
 
-    const specifierStatWithoutExt = await statOrUndefined(
-      resolvedSpecifierWithoutExt,
-    );
-    if (specifierStatWithoutExt?.isDirectory()) {
-      return importSpecifier + '/index.js';
-    }
-
     const resolvedSpecifierPathname = `${resolvedSpecifierWithoutExt}.js`;
     const specifierStat = await statOrUndefined(resolvedSpecifierPathname);
     if (specifierStat?.isFile()) {
@@ -248,6 +241,13 @@ export const shouldAppendJsExtension = async (
     );
     if (specifierStatTsx?.isFile()) {
       return importSpecifier + '.js';
+    }
+
+    const specifierStatWithoutExt = await statOrUndefined(
+      resolvedSpecifierWithoutExt,
+    );
+    if (specifierStatWithoutExt?.isDirectory()) {
+      return importSpecifier + '/index.js';
     }
 
     return false;
