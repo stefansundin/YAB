@@ -154,14 +154,14 @@ const loadPackageDotJSON = async (packageDirectory) => {
  * @param importSpecifier       is what that "import" statement
  *                              is trying to import
  */
-export const shouldAppendJsExtension = async (importingFilePathname, importSpecifier, fileMetaData) => {
+export const shouldAppendJsExtension = async (importingFilePathname, importSpecifier, fileMetaData, options) => {
     if (!isProcessable(importingFilePathname)) {
         return false;
     }
     const importSpecifierParts = importSpecifier.split('/');
     const importingFileDirectory = path.dirname(importingFilePathname);
-    // Handle src/ imports
-    if (importSpecifier.startsWith('src/')) {
+    // Transform "src/" imports to relative paths
+    if (options.relative && importSpecifier.startsWith('src/')) {
         let pathname = fileMetaData.pathname;
         if (!pathname.startsWith('src/') && pathname.includes('src/')) {
             pathname = pathname.substring(pathname.indexOf('src/'));
@@ -170,7 +170,7 @@ export const shouldAppendJsExtension = async (importingFilePathname, importSpeci
         importSpecifier = path.relative(path.dirname(fileMetaData.absolutePathname), absolutePathnameTo);
         if (!importSpecifier.startsWith('./') &&
             !importSpecifier.startsWith('../')) {
-            // the imported file was in the same directory, add ./ as a prefix
+            // the imported file is in the same directory, add ./ as a prefix
             importSpecifier = './' + importSpecifier;
         }
     }
@@ -240,7 +240,7 @@ export const shouldAppendJsExtension = async (importingFilePathname, importSpeci
     }
     return false;
 };
-export const appendJsExtension = async (ast, metaData) => {
+export const appendJsExtension = async (ast, metaData, options) => {
     const transformations = [];
     const fileMetaData = { ...metaData };
     const potentialReplacements = [];
@@ -289,7 +289,7 @@ export const appendJsExtension = async (ast, metaData) => {
         },
     });
     await Promise.all(potentialReplacements.map(async ({ start, end, originalValue, quoteCharacter, specifier }) => {
-        const newPath = await shouldAppendJsExtension(metaData.pathname, specifier, fileMetaData);
+        const newPath = await shouldAppendJsExtension(metaData.pathname, specifier, fileMetaData, options);
         if (newPath) {
             transformations.push({
                 start,

@@ -16,6 +16,11 @@ import {
 import { isProcessable, processFile } from './processFile.js';
 import usage from './usage.js';
 
+export interface Options {
+  sort: boolean;
+  relative: boolean;
+}
+
 const metaURLString = import.meta.url;
 const { pathname: thisScriptPathname } = new URL(metaURLString);
 
@@ -38,7 +43,7 @@ if (!userProvidedPathname) {
 
 const tryAndProcessFile = async (pathname: string) => {
   try {
-    await processFile(pathname);
+    await processFile(pathname, options as Options);
   } catch (e) {
     if (e.code === 'BABEL_PARSER_SYNTAX_ERROR') {
       log.error(

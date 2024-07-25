@@ -1,6 +1,6 @@
 import babelParser from '@babel/parser';
 import appendJsExtension from './appendJsExtension.js';
-export const transformFile = async (sourceCode, sourceFileMetaData) => {
+export const transformFile = async (sourceCode, sourceFileMetaData, options) => {
     const ast = babelParser.parse(sourceCode, {
         sourceType: 'module',
         plugins: [
@@ -10,7 +10,7 @@ export const transformFile = async (sourceCode, sourceFileMetaData) => {
             ['importAttributes', { deprecatedAssertSyntax: true }],
         ],
     });
-    return appendJsExtension(ast, sourceFileMetaData);
+    return appendJsExtension(ast, sourceFileMetaData, options);
 };
 export default transformFile;
 //# sourceMappingURL=transformFile.js.map

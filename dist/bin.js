@@ -23,7 +23,7 @@ if (!userProvidedPathname) {
 }
 const tryAndProcessFile = async (pathname) => {
     try {
-        await processFile(pathname);
+        await processFile(pathname, options);
     }
     catch (e) {
         if (e.code === 'BABEL_PARSER_SYNTAX_ERROR') {

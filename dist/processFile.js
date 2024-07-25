@@ -5,13 +5,13 @@ import { applyTransformations } from './lib/transformation.js';
 import transformFile from './lib/transformFile.js';
 export const isProcessable = (p) => p.endsWith('.js') || p.endsWith('.ts') || p.endsWith('.tsx');
 // TODO update the source-maps
-export const processFile = async (pathname) => {
+export const processFile = async (pathname, options) => {
     const buffer = await readFile(pathname);
     const sourceCode = buffer.toString();
     const [transformations] = await transformFile(sourceCode, {
         pathname,
         absolutePathname: path.resolve(pathname),
-    });
+    }, options);
     const nt = transformations.length;
     if (nt > 0) {
         const transformedSource = applyTransformations(transformations, sourceCode);

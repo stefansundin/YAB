@@ -1,5 +1,6 @@
 import babelParser from '@babel/parser';
 
+import { Options } from '../bin.js';
 import appendJsExtension from './appendJsExtension.js';
 import { Transformation } from './transformation.js';
 
@@ -16,6 +17,7 @@ export type FileMetaData = {
 export const transformFile = async (
   sourceCode: string,
   sourceFileMetaData: FileMetaData,
+  options: Options,
 ): Promise<[Transformation[], FileMetaData]> => {
   const ast = babelParser.parse(sourceCode, {
     sourceType: 'module',
@@ -27,7 +29,7 @@ export const transformFile = async (
     ],
   });
 
-  return appendJsExtension(ast, sourceFileMetaData);
+  return appendJsExtension(ast, sourceFileMetaData, options);
 };
 
 export default transformFile;

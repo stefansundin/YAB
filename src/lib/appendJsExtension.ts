@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import BT from '@babel/types';
 
+import { Options } from '../bin.js';
 import { isProcessable } from '../processFile.js';
 import { Location, Transformation } from './transformation.js';
 import { FileMetaData } from './transformFile.js';
@@ -178,6 +179,7 @@ export const shouldAppendJsExtension = async (
   importingFilePathname: string,
   importSpecifier: string,
   fileMetaData: FileMetaData,
+  options: Options,
 ): Promise<false | string> => {
   if (!isProcessable(importingFilePathname)) {
     return false;
@@ -187,8 +189,8 @@ export const shouldAppendJsExtension = async (
 
   const importingFileDirectory = path.dirname(importingFilePathname);
 
-  // Handle src/ imports
-  if (importSpecifier.startsWith('src/')) {
+  // Transform "src/" imports to relative paths
+  if (options.relative && importSpecifier.startsWith('src/')) {
     let pathname = fileMetaData.pathname;
     if (!pathname.startsWith('src/') && pathname.includes('src/')) {
       pathname = pathname.substring(pathname.indexOf('src/'));
@@ -206,7 +208,7 @@ export const shouldAppendJsExtension = async (
       !importSpecifier.startsWith('./') &&
       !importSpecifier.startsWith('../')
     ) {
-      // the imported file was in the same directory, add ./ as a prefix
+      // the imported file is in the same directory, add ./ as a prefix
       importSpecifier = './' + importSpecifier;
     }
   }
@@ -316,6 +318,7 @@ type PotentialReplacement = {
 export const appendJsExtension = async (
   ast: BT.Node,
   metaData: FileMetaData,
+  options: Options,
 ): Promise<[Transformation[], FileMetaData]> => {
   const transformations: Transformation[] = [];
   const fileMetaData: FileMetaData = { ...metaData };
@@ -392,6 +395,7 @@ export const appendJsExtension = async (
           metaData.pathname,
           specifier,
           fileMetaData,
+          options,
         );
 
         if (newPath) {
