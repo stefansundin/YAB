@@ -68,7 +68,7 @@ export const recursivelyReadDirectory = async (
 
   const deeperEntries = await Promise.all(
     dirEntries.map(async (entry: string): Promise<string[]> => {
-      if (entry === 'node_modules') {
+      if (entry === 'node_modules' || entry === 'dist') {
         return [];
       }
 
