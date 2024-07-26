@@ -155,8 +155,7 @@ const loadPackageDotJSON = async (packageDirectory) => {
  *                              is trying to import
  */
 export const shouldAppendJsExtension = async (importingFilePathname, importSpecifier, fileMetaData, options) => {
-    if (!isProcessable(importingFilePathname) ||
-        importSpecifier.endsWith('.js')) {
+    if (!isProcessable(importingFilePathname)) {
         return false;
     }
     const importSpecifierParts = importSpecifier.split('/');
@@ -175,6 +174,10 @@ export const shouldAppendJsExtension = async (importingFilePathname, importSpeci
                 !importSpecifier.startsWith('../')) {
                 // the imported file is in the same directory, add ./ as a prefix
                 importSpecifier = './' + importSpecifier;
+            }
+            if (importSpecifier.endsWith('.js')) {
+                // Transform "src/" import that already has a ".js" extension to a relative import
+                return importSpecifier;
             }
         }
         else {
