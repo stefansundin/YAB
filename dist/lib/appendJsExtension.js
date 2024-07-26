@@ -155,23 +155,46 @@ const loadPackageDotJSON = async (packageDirectory) => {
  *                              is trying to import
  */
 export const shouldAppendJsExtension = async (importingFilePathname, importSpecifier, fileMetaData, options) => {
-    if (!isProcessable(importingFilePathname)) {
+    if (!isProcessable(importingFilePathname) ||
+        importSpecifier.endsWith('.js')) {
         return false;
     }
     const importSpecifierParts = importSpecifier.split('/');
     const importingFileDirectory = path.dirname(importingFilePathname);
-    // Transform "src/" imports to relative paths
-    if (options.relative && importSpecifier.startsWith('src/')) {
+    // Process "src/" imports
+    if (importSpecifier.startsWith('src/')) {
         let pathname = fileMetaData.pathname;
         if (!pathname.startsWith('src/') && pathname.includes('src/')) {
             pathname = pathname.substring(pathname.indexOf('src/'));
         }
         const absolutePathnameTo = fileMetaData.absolutePathname.substring(0, fileMetaData.absolutePathname.length - pathname.length) + importSpecifier;
-        importSpecifier = path.relative(path.dirname(fileMetaData.absolutePathname), absolutePathnameTo);
-        if (!importSpecifier.startsWith('./') &&
-            !importSpecifier.startsWith('../')) {
-            // the imported file is in the same directory, add ./ as a prefix
-            importSpecifier = './' + importSpecifier;
+        if (options.relative) {
+            // Transform to relative paths
+            importSpecifier = path.relative(path.dirname(fileMetaData.absolutePathname), absolutePathnameTo);
+            if (!importSpecifier.startsWith('./') &&
+                !importSpecifier.startsWith('../')) {
+                // the imported file is in the same directory, add ./ as a prefix
+                importSpecifier = './' + importSpecifier;
+            }
+        }
+        else {
+            // Do not transform the import to a relative import, but add the extension
+            const specifierStat = await statOrUndefined(`${absolutePathnameTo}.js`);
+            if (specifierStat?.isFile()) {
+                return importSpecifier + '.js';
+            }
+            const specifierStatTs = await statOrUndefined(`${absolutePathnameTo}.ts`);
+            if (specifierStatTs?.isFile()) {
+                return importSpecifier + '.js';
+            }
+            const specifierStatTsx = await statOrUndefined(`${absolutePathnameTo}.tsx`);
+            if (specifierStatTsx?.isFile()) {
+                return importSpecifier + '.js';
+            }
+            const specifierStatWithoutExt = await statOrUndefined(absolutePathnameTo);
+            if (specifierStatWithoutExt?.isDirectory()) {
+                return importSpecifier + '/index.js';
+            }
         }
     }
     if (importSpecifier.startsWith('./') ||
@@ -183,18 +206,15 @@ export const shouldAppendJsExtension = async (importingFilePathname, importSpeci
         const resolvedSpecifierWithoutExt = path.isAbsolute(importSpecifier)
             ? importSpecifier
             : path.join(importingFileDirectory, importSpecifier);
-        const resolvedSpecifierPathname = `${resolvedSpecifierWithoutExt}.js`;
-        const specifierStat = await statOrUndefined(resolvedSpecifierPathname);
+        const specifierStat = await statOrUndefined(`${resolvedSpecifierWithoutExt}.js`);
         if (specifierStat?.isFile()) {
             return importSpecifier + '.js';
         }
-        const resolvedSpecifierPathnameTs = `${resolvedSpecifierWithoutExt}.ts`;
-        const specifierStatTs = await statOrUndefined(resolvedSpecifierPathnameTs);
+        const specifierStatTs = await statOrUndefined(`${resolvedSpecifierWithoutExt}.ts`);
         if (specifierStatTs?.isFile()) {
             return importSpecifier + '.js';
         }
-        const resolvedSpecifierPathnameTsx = `${resolvedSpecifierWithoutExt}.tsx`;
-        const specifierStatTsx = await statOrUndefined(resolvedSpecifierPathnameTsx);
+        const specifierStatTsx = await statOrUndefined(`${resolvedSpecifierWithoutExt}.tsx`);
         if (specifierStatTsx?.isFile()) {
             return importSpecifier + '.js';
         }
