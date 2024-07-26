@@ -8,17 +8,15 @@ import { formatSourceFromFile } from 'format-imports';
 import minimist from 'minimist';
 
 import log, { strong } from './lib/log.js';
-import {
-  hasOwnProperty,
-  postpone,
-  recursivelyReadDirectory,
-} from './lib/util.js';
+import { postpone, recursivelyReadDirectory } from './lib/util.js';
 import { isProcessable, processFile } from './processFile.js';
 import usage from './usage.js';
 
 export interface Options {
-  sort: boolean;
-  relative: boolean;
+  help?: boolean;
+  watch?: boolean;
+  sort?: boolean;
+  relative?: boolean;
 }
 
 const metaURLString = import.meta.url;
@@ -28,7 +26,7 @@ const printUsage = () => log(usage);
 
 const bail = (errMessage: string, exitCode = 1): never => {
   log(`\n>> Error: ${errMessage}\n`);
-  printUsage();
+  log('Use --help to see usage instructions.');
   process.exit(exitCode);
 };
 
@@ -148,8 +146,13 @@ const processOnce = async (pathname: string) => {
   log.info('All done here. Have a nice day!');
 };
 
-if (hasOwnProperty(options, 'once')) {
-  processOnce(userProvidedPathname);
-} else {
+if (options.help) {
+  printUsage();
+  process.exit(0);
+}
+
+if (options.watch) {
   startWatching(userProvidedPathname);
+} else {
+  processOnce(userProvidedPathname);
 }
