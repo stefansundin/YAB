@@ -181,7 +181,10 @@ export const shouldAppendJsExtension = async (
   fileMetaData: FileMetaData,
   options: Options,
 ): Promise<false | string> => {
-  if (!isProcessable(importingFilePathname)) {
+  if (
+    !isProcessable(importingFilePathname) ||
+    importSpecifier.endsWith('.js')
+  ) {
     return false;
   }
 
