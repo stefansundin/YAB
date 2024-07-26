@@ -214,6 +214,10 @@ export const shouldAppendJsExtension = async (
         // the imported file is in the same directory, add ./ as a prefix
         importSpecifier = './' + importSpecifier;
       }
+      if (importSpecifier.endsWith('.js')) {
+        // Transform "src/" import that already has a ".js" extension to a relative import
+        return importSpecifier;
+      }
     } else {
       // Do not transform the import to a relative import, but add the extension
       const specifierStat = await statOrUndefined(`${absolutePathnameTo}.js`);
