@@ -239,6 +239,9 @@ export const shouldAppendJsExtension = async (
 
       const specifierStatWithoutExt = await statOrUndefined(absolutePathnameTo);
       if (specifierStatWithoutExt?.isDirectory()) {
+        if (importSpecifier.endsWith('/')) {
+          return importSpecifier + 'index.js';
+        }
         return importSpecifier + '/index.js';
       }
     }
@@ -281,6 +284,9 @@ export const shouldAppendJsExtension = async (
       resolvedSpecifierWithoutExt,
     );
     if (specifierStatWithoutExt?.isDirectory()) {
+      if (importSpecifier.endsWith('/')) {
+        return importSpecifier + 'index.js';
+      }
       return importSpecifier + '/index.js';
     }
 

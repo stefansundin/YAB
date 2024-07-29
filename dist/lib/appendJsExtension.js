@@ -196,6 +196,9 @@ export const shouldAppendJsExtension = async (importingFilePathname, importSpeci
             }
             const specifierStatWithoutExt = await statOrUndefined(absolutePathnameTo);
             if (specifierStatWithoutExt?.isDirectory()) {
+                if (importSpecifier.endsWith('/')) {
+                    return importSpecifier + 'index.js';
+                }
                 return importSpecifier + '/index.js';
             }
         }
@@ -223,6 +226,9 @@ export const shouldAppendJsExtension = async (importingFilePathname, importSpeci
         }
         const specifierStatWithoutExt = await statOrUndefined(resolvedSpecifierWithoutExt);
         if (specifierStatWithoutExt?.isDirectory()) {
+            if (importSpecifier.endsWith('/')) {
+                return importSpecifier + 'index.js';
+            }
             return importSpecifier + '/index.js';
         }
         return false;
