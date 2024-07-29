@@ -35,8 +35,13 @@ const {
   ...options
 } = minimist(process.argv.slice(2));
 
+if (options.help) {
+  printUsage();
+  process.exit(0);
+}
+
 if (!userProvidedPathname) {
-  bail('Please provide a path to a directory to watch.');
+  bail('Please provide a path to a directory or file to transform.');
 }
 
 const tryAndProcessFile = async (pathname: string) => {
@@ -145,11 +150,6 @@ const processOnce = async (pathname: string) => {
   }
   log.info('All done here. Have a nice day!');
 };
-
-if (options.help) {
-  printUsage();
-  process.exit(0);
-}
 
 if (options.watch) {
   startWatching(userProvidedPathname);
